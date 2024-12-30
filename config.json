@@ -1,0 +1,26 @@
+{
+    "locations": {
+        "input": "C:\\Users\\danie\\Documents\\Python Scripts\\Dad's FI Parser\\input",
+        "output": "C:\\Users\\danie\\Documents\\Python Scripts\\Dad's FI Parser\\output",
+        "logger": "C:\\Users\\danie\\Documents\\Python Scripts\\Dad's FI Parser\\logs"
+    },
+    "naming_convention": {
+        "input": {
+            "pre": "FI-funds-",
+            "ext": ".xlsx"
+        },
+        "output": {
+            "pre": "",
+            "ext": ".xlsx"
+        },
+        "logger": {
+            "pre": "FI-funds-log",
+            "ext": ".out"
+        }
+    },
+    "function_args": {
+        "start_capital": 10000,
+        "start_date": "05/06/2007",
+        "required_return": 4.298
+    }
+}
