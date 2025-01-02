@@ -22,7 +22,7 @@ from datetime import datetime as dt
 ## Getting Current Date and Time
 datetime = dt.strftime(dt.now(), "%Y%m%d_%H%M%S")
 logger = logging.getLogger(__name__)
-log_file_path = os.path.join("C:\\Users\\danie\\Documents\\Python Scripts\\Dad's FI Parser\\logs", f'fund_return_log_{datetime}.log')
+log_file_path = os.path.join("__LOG DIRECTORY__", f'fund_return_log_{datetime}.log')
 logging.basicConfig(encoding='utf-8',
                     datefmt='%m/%d/%Y %I:%M:%S %p',
                     format = '%(asctime)s - %(levelname)s: %(message)s',

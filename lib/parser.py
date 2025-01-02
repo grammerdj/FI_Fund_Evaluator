@@ -139,7 +139,7 @@ class Parser():
 
         ## Starting Price and Shares
         p_arr = np.array(price.index.tolist()) - self.start
-        p_idx = max(np.where(p_arr < td_zero)[0])
+        p_idx = min(np.where(p_arr >= td_zero)[0])
         self.start_date = price.iloc[p_idx].name
         self.start_shares = np.trunc(start_val / price["Close"].iloc[p_idx])
         self.start_val = self.start_shares*price["Close"].iloc[p_idx]
@@ -252,7 +252,8 @@ class Parser():
         rr_cost_basis_l = list()
 
         # Getting Year Data
-        year_l = sorted(list(set([x.year for x in self.reinvestment_data["Date"]])))
+        filter = self.prices.apply(lambda x: x.name.year >= self.start_date.year, axis=1)
+        year_l = sorted(list(set([x.year for x in self.prices.loc[filter].index])))
 
         # Popping current year
         year_l = year_l[:-1]

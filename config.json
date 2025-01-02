@@ -1,8 +1,8 @@
 {
     "locations": {
-        "input": "C:\\Users\\danie\\Documents\\Python Scripts\\Dad's FI Parser\\input",
-        "output": "C:\\Users\\danie\\Documents\\Python Scripts\\Dad's FI Parser\\output",
-        "logger": "C:\\Users\\danie\\Documents\\Python Scripts\\Dad's FI Parser\\logs"
+        "input": "__INPUT FILE DIRECTORY__",
+        "output": "__OUTPUT FILE DIRECTORY__",
+        "logger": "__LOG FILE DIRECTORY__"
     },
     "naming_convention": {
         "input": {
