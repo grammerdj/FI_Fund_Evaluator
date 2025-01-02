@@ -257,7 +257,6 @@ class Parser():
 
         # Popping current year
         year_l = year_l[:-1]
-        print(year_l)
 
         # Getting Rate of Return assuming reinvestment in required return
         div = copy.deepcopy(self.dividends)
