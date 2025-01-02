@@ -16,7 +16,7 @@ class Config():
         Initializing the attributes of config.json location.
         """
         # Configuration File Location
-        self.config_dir = "C:\\Users\\danie\\Documents\\Python Scripts\\Dad's FI Parser"
+        self.config_dir = "__CONFIG DIRECTORY__"
         self.config_nm = "config.json"
         self.config_path = os.path.join(self.config_dir, self.config_nm)
 
