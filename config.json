@@ -2,7 +2,7 @@
     "locations": {
         "input": "__INPUT FILE DIRECTORY__",
         "output": "__OUTPUT FILE DIRECTORY__",
-        "logger": "__LOG FILE DIRECTORY__"
+        "summary": "__SUMMARY FILE DIRECTORY__"
     },
     "naming_convention": {
         "input": {
@@ -13,14 +13,14 @@
             "pre": "",
             "ext": ".xlsx"
         },
-        "logger": {
-            "pre": "FI-funds-log",
-            "ext": ".out"
+        "summary": {
+            "pre": "FI-funds-summary-",
+            "ext": ".xlsx"
         }
     },
     "function_args": {
         "start_capital": 10000,
-        "start_date": "05/06/2007",
+        "start_date": "01/01/2004",
         "required_return": 4.298
     }
 }

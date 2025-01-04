@@ -48,6 +48,26 @@ class Formatter():
             self.reinv.to_excel(writer, sheet_name = f"Reinvestment_{start_date.replace('/','-')}_{seed_capital}", index=False)
             self.perf.to_excel(writer, sheet_name = f"Performance_{req_ret}", index=False)
 
+# -------------------------------------------#
+
+    def output_summary(self, summary_config, summary_df):
+        """
+        Outputs a summary excel document containing each ticker's longest running geometric return and the number of full years of return data.
+        """
+
+        # Initializing attributes 
+        self.sumloc = summary_config["location"]
+        self.sumprefix = summary_config["prefix"]
+        self.sumext = summary_config["extension"]
+        self.sumname = f"{self.sumprefix}{self.date}{self.sumext}"
+        self.sumpath = os.path.join(self.sumloc, self.sumname)
+
+        with pd.ExcelWriter(self.sumpath,
+                            date_format="YYYY-MM-DD",
+                            datetime_format="YYYY-MM-DD"
+        ) as writer:
+            
+            summary_df.to_excel(writer, sheet_name = "Performance Summary", index=False)
 
 
 

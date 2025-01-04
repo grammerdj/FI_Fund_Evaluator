@@ -23,7 +23,7 @@ class Config():
         # Attribute Placeholders
         self.input_cfg = dict()
         self.output_cfg = dict()
-        self.logging_cfg = dict()
+        self.summary_cfg = dict()
 
 # -------------------------------------------#
 
@@ -47,10 +47,10 @@ class Config():
                 "extension": data["naming_convention"]["output"]["ext"]
             }
             # Logging Config:
-            self.logging_cfg = {
-                "location": data["locations"]["logger"], 
-                "prefix": data["naming_convention"]["logger"]["pre"], 
-                "extension": data["naming_convention"]["logger"]["ext"]
+            self.summary_cfg = {
+                "location": data["locations"]["summary"], 
+                "prefix": data["naming_convention"]["summary"]["pre"], 
+                "extension": data["naming_convention"]["summary"]["ext"]
             }
             # Function Arguments:
             self.func_args = {
@@ -62,7 +62,8 @@ class Config():
         # Assert configurations are correct
         assert os.path.exists(self.input_cfg["location"]), "Input file location does not exist"
         assert os.path.exists(self.output_cfg["location"]), "Output file location does not exist"
-        assert (self.output_cfg["extension"][0] == ".") & (self.input_cfg["extension"][0] == "."), "Input and/or ouput configurated extensions do not start with '.'"
+        assert os.path.exists(self.summary_cfg["location"]), "Summary file location does not exist"
+        assert (self.output_cfg["extension"][0] == ".") & (self.input_cfg["extension"][0] == ".") & (self.summary_cfg["extension"][0] == "."), "Input and/or ouput and/or summary configurated extensions do not start with '.'"
         assert self.func_args["start_cap"] > 0, "Starting capital is less than or equal to zero"
         assert re.fullmatch(r'[0-9]{2}/[0-9]{2}/[0-9]{4}', self.func_args["start_dt"]), "Start date does not follow the format mm/dd/yyyy"
         assert self.func_args["req_ret"] > 0, "Required return is less than or equal to zero"
