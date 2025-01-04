@@ -58,8 +58,6 @@ class Parser():
         price.drop(columns=['Date'], inplace=True)
 
         ## Filter Months
-        if price.groupby(["Year", "Month"])[["Year", "Month", "Day"]].min()["Day"].iloc[0] > 4:
-            price = price.loc[(price["Year"] != price["Year"].iloc[0]) | (price["Month"] != price["Month"].iloc[0])]
         price = price.loc[(price["Year"] != self.current["Year"].iloc[0]) | (price["Month"] != self.current["Month"].iloc[0])]
 
         ## Group By Month and Year
@@ -87,8 +85,6 @@ class Parser():
 
         ## Filter Months
         div = div.loc[(div["Year"] != self.current["Year"].iloc[0]) | (div["Month"] != self.current["Month"].iloc[0])]
-        if (price.index[0][0] + ((price.index[0][1])/12)) > (div["Year"].iloc[0] + ((div["Month"].iloc[0])/12)):
-            div = div.loc[(div["Year"] + ((div["Month"])/12)) >= (price.index[0][0] + ((price.index[0][1])/12))]
 
         ## Group By Month and Year
         div_gp = div.groupby(["Year", "Month"])
@@ -96,7 +92,9 @@ class Parser():
         div["Day_Div"] = div_gp["Day"].last()
         div["Dividends"] = div_gp["Dividends"].sum()
         div.drop(columns=["Day"], inplace=True)
+        div.reset_index(inplace=True)
         div.drop_duplicates(inplace=True)
+        div.set_index(['Year', 'Month'], inplace=True)
 
         # Step 3: Join and Format
         joined = pd.concat([price, div], axis = 1, join="outer")
@@ -252,10 +250,11 @@ class Parser():
         rr_cost_basis_l = list()
 
         # Getting Year Data
+
         filter = self.prices.apply(lambda x: x.name.year >= self.start_date.year, axis=1)
         year_l = sorted(list(set([x.year for x in self.prices.loc[filter].index])))
 
-        # Popping current year
+        # Popping current year and first year data
         year_l = year_l[:-1]
 
         # Getting Rate of Return assuming reinvestment in required return
@@ -300,8 +299,13 @@ class Parser():
             # Appending to Lists
             rnr_cost_basis_l.append(p_0 + div_total_val)
             rnr_l.append(total_ret*100)
-            rnrval_l.append(val_prop)
-            arnr_l.append(geometric_mean(rnrval_l) - 1)
+            
+            if year_l.index(year) == 0:
+                arnr_l.append(None)
+            else:
+                rnrval_l.append(val_prop)
+                arnr_l.append(geometric_mean(rnrval_l) - 1)
+
 
             # Adjusting Dividend Pool
             div_total_val += div_pool_ret + div_yr_val
@@ -326,9 +330,13 @@ class Parser():
             # Appending to Lists
             rr_cost_basis_l.append(p_0)
             rr_l.append(total_ret*100)
-            rrval_l.append(val_prop)
+
             
-            ar_l.append(geometric_mean(rrval_l) - 1)     
+            if year_l.index(year) == 0:
+                ar_l.append(None)
+            else:
+                rrval_l.append(val_prop)
+                ar_l.append(geometric_mean(rrval_l) - 1)     
 
         # Creating Dataframe
         self.investment_performance = pd.DataFrame({"Year":year_l,
