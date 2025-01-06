@@ -8,10 +8,12 @@ from lib.config import Config
 from lib.scraper import Scraper
 from lib.parser import Parser
 from lib.formatter import Formatter
+from lib.portfolio_optimizer import portfolioOptimizer
 import os
 import sys
 import traceback
 import pandas as pd
+import numpy as np
 import logging
 from datetime import datetime as dt
 
@@ -22,7 +24,7 @@ from datetime import datetime as dt
 ## Getting Current Date and Time
 datetime = dt.strftime(dt.now(), "%Y%m%d_%H%M%S")
 logger = logging.getLogger(__name__)
-log_file_path = os.path.join("__LOG DIRECTORY__", f'fund_return_log_{datetime}.log')
+log_file_path = os.path.join("__LOGGING FILE DIRECTORY__", f'fund_return_log_{datetime}.log')
 logging.basicConfig(encoding='utf-8',
                     datefmt='%m/%d/%Y %I:%M:%S %p',
                     format = '%(asctime)s - %(levelname)s: %(message)s',
@@ -66,10 +68,20 @@ except Exception as e:
 
 logger.info("Step 3 Begins - Getting Fund Return Metrics")
 try: 
-    ## Summary Data Lists
+    ## Date Information
+    cd = dt.now().year
+    sd = dt.strptime(config.func_args["start_dt"], "%d/%m/%Y").year
+
+    ## Summary Data Lists/DFs
     tickers = []
     geom_ret = []
+    std_ret = []
     years = []
+    i = np.arange(sd, cd, 1)
+    yearly_ret = pd.DataFrame(index=i)
+    less_than_one = []
+
+    ## Calculating per-fund perfomance 
     for ticker in fund_tickers:
         scrape = Scraper()
         scrape.get_data(ticker)
@@ -77,19 +89,49 @@ try:
         parse.get_monthly_data()
         parse.get_reinvestment_metrics(config.func_args["start_cap"], config.func_args["start_dt"])
         parse.get_performance(config.func_args["req_ret"])
-        formatting = Formatter(ticker, config.output_cfg, parse.monthly_data, parse.reinvestment_data, parse.investment_performance)
+        formatting = Formatter(ticker, config.output_cfg, config.summary_cfg, parse.monthly_data, parse.reinvestment_data, parse.investment_performance)
         formatting.output_excel(config.func_args["start_dt"], config.func_args["start_cap"], config.func_args["req_ret"])
 
         ## Adding to Summary Data Lists
-        tickers.append(ticker)
-        geom_ret.append(round(float(parse.investment_performance["Geometric Return w/ Reinvestment"][-1:].values[0]), 4))
-        years.append(int(parse.investment_performance["Geometric Return w/ Reinvestment"].count()))
+        if parse.investment_performance.shape[0] > 1:
+            tickers.append(ticker)
+            geom_ret.append(round(float(parse.investment_performance["Geometric Return w/ Reinvestment"][-1:].values[0]), 4))
+            std_ret.append(round(float(parse.investment_performance["Rate w/ Reinvestment"].std()/100), 4))
+            years.append(int(parse.investment_performance["Geometric Return w/ Reinvestment"].count()))
+            n = parse.investment_performance["Rate w/ Reinvestment"].to_numpy()[1:]/100
+            temp_df = pd.DataFrame({ticker: np.hstack((np.zeros(len(i)-len(n)) + np.nan, n))})
+            yearly_ret = pd.concat([yearly_ret, temp_df], axis=1) 
+        else:
+            less_than_one.append(ticker)
 
-    ## Save Summary File
+    ## Formatting summary dataframes
     summary_df = pd.DataFrame({"Ticker":tickers,
                                "Geometric Return": geom_ret,
+                               "Standard Deviation of Returns": std_ret,
                                "Number of Full Years": years})
-    formatting.output_summary(config.summary_cfg, summary_df)
+    less_one_year = pd.DataFrame({"Ticker":less_than_one})
+
+
+    ## Calculating Optimal Portfolios
+    cov_df = yearly_ret.cov()
+    ret_df = pd.Series(geom_ret, index = tickers)
+    opt = portfolioOptimizer(config.func_args["rf_rate"])
+
+    ### File Paths
+    sharpe_weight_path = os.path.join(formatting.sumloc, f"sharpe-optimal-weights-{formatting.date}.csv")
+    vol_weight_path = os.path.join(formatting.sumloc, f"req-vol-optimal-weights-{formatting.date}.csv")
+    ret_weight_path = os.path.join(formatting.sumloc, f"req-ret-optimal-weights-{formatting.date}.csv")
+
+    ### Optimizing
+    opt.maximize_Sharpe(ret_df, cov_df, sharpe_weight_path)
+    opt.maximize_return(ret_df, cov_df, vol_weight_path, config.func_args["opt_vol"])
+    opt.minimize_volatility(ret_df, cov_df, ret_weight_path, config.func_args["opt_ret"])
+
+    ### Formatting Performance
+    optimized = pd.DataFrame({'Strategy':opt.strategy, 'Portfolio Return':opt.return_list, 'Portfolio Volatility':opt.risk, 'Portfolio Sharpe':opt.sharpe})
+
+    ## Save Summary File
+    formatting.output_summary(summary_df, less_one_year, optimized)
 
 except Exception as e:
     logger.error(f"Step 3 failed with the following message - {traceback.format_exc()}")

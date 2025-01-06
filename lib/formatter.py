@@ -11,7 +11,7 @@ Purpose: To export the fund history and performance tables as excel documents
 """
 class Formatter():
 
-    def __init__(self, ticker, output_config, history_df, reinvestment_df, performance_df):
+    def __init__(self, ticker, output_config, summary_config, history_df, reinvestment_df, performance_df):
         """
         Initializing the attributes of the class
         """
@@ -27,6 +27,14 @@ class Formatter():
         self.ext = output_config["extension"]
         self.name = f"{self.prefix}{ticker}-specs-{self.date}{self.ext}"
         self.path = os.path.join(self.loc, self.name)
+
+        
+        # Summary attributes 
+        self.sumloc = summary_config["location"]
+        self.sumprefix = summary_config["prefix"]
+        self.sumext = summary_config["extension"]
+        self.sumname = f"{self.sumprefix}{self.date}{self.sumext}"
+        self.sumpath = os.path.join(self.sumloc, self.sumname)
 
 # -------------------------------------------#
 
@@ -50,17 +58,10 @@ class Formatter():
 
 # -------------------------------------------#
 
-    def output_summary(self, summary_config, summary_df):
+    def output_summary(self, summary_df, less_one_year, optimized):
         """
         Outputs a summary excel document containing each ticker's longest running geometric return and the number of full years of return data.
         """
-
-        # Initializing attributes 
-        self.sumloc = summary_config["location"]
-        self.sumprefix = summary_config["prefix"]
-        self.sumext = summary_config["extension"]
-        self.sumname = f"{self.sumprefix}{self.date}{self.sumext}"
-        self.sumpath = os.path.join(self.sumloc, self.sumname)
 
         with pd.ExcelWriter(self.sumpath,
                             date_format="YYYY-MM-DD",
@@ -68,6 +69,7 @@ class Formatter():
         ) as writer:
             
             summary_df.to_excel(writer, sheet_name = "Performance Summary", index=False)
-
+            less_one_year.to_excel(writer, sheet_name = "Funds Started < 1 Year Ago", index=False)
+            optimized.to_excel(writer, sheet_name = 'Optimized Portfolio Attributes', index=False)
 
 

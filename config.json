@@ -21,6 +21,9 @@
     "function_args": {
         "start_capital": 10000,
         "start_date": "01/01/2004",
-        "required_return": 4.298
+        "required_return": 4.298,
+        "risk_free_rate": 2.9,
+        "optimizer_return": 10.27,
+        "optimizer_volatility": 17
     }
 }
