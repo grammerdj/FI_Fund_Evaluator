@@ -14,6 +14,7 @@ import sys
 import traceback
 import pandas as pd
 import numpy as np
+import math
 import logging
 from datetime import datetime as dt
 
@@ -24,7 +25,7 @@ from datetime import datetime as dt
 ## Getting Current Date and Time
 datetime = dt.strftime(dt.now(), "%Y%m%d_%H%M%S")
 logger = logging.getLogger(__name__)
-log_file_path = os.path.join("__LOGGING FILE DIRECTORY__", f'fund_return_log_{datetime}.log')
+log_file_path = os.path.join("__LOG DIR PATH__", f'fund_return_log_{datetime}.log')
 logging.basicConfig(encoding='utf-8',
                     datefmt='%m/%d/%Y %I:%M:%S %p',
                     format = '%(asctime)s - %(levelname)s: %(message)s',
@@ -73,13 +74,18 @@ try:
     sd = dt.strptime(config.func_args["start_dt"], "%d/%m/%Y").year
 
     ## Summary Data Lists/DFs
-    tickers = []
-    geom_ret = []
-    std_ret = []
-    years = []
+    tickers = list()
+    geom_ret = list()
+    std_ret = list()
+    years = list()
+    forward_div_rate = list()
+    forward_div_yield = list()
+    curr_price = list()
+    less_than_one = list()
+
+    ## Preparing for Portfolio Analysis
     i = np.arange(sd, cd, 1)
     yearly_ret = pd.DataFrame(index=i)
-    less_than_one = []
 
     ## Calculating per-fund perfomance 
     for ticker in fund_tickers:
@@ -98,18 +104,14 @@ try:
             geom_ret.append(round(float(parse.investment_performance["Geometric Return w/ Reinvestment"][-1:].values[0]), 4))
             std_ret.append(round(float(parse.investment_performance["Rate w/ Reinvestment"].std()/100), 4))
             years.append(int(parse.investment_performance["Geometric Return w/ Reinvestment"].count()))
+            forward_div_rate.append(scrape.ticker.info["dividendRate"])
+            forward_div_yield.append(round(scrape.ticker.info["dividendYield"], 4))
+            curr_price.append(scrape.prices["Close"][-1:].values[0])
             n = parse.investment_performance["Rate w/ Reinvestment"].to_numpy()[1:]/100
             temp_df = pd.DataFrame({ticker: np.hstack((np.zeros(len(i)-len(n)) + np.nan, n))})
             yearly_ret = pd.concat([yearly_ret, temp_df], axis=1) 
         else:
             less_than_one.append(ticker)
-
-    ## Formatting summary dataframes
-    summary_df = pd.DataFrame({"Ticker":tickers,
-                               "Geometric Return": geom_ret,
-                               "Standard Deviation of Returns": std_ret,
-                               "Number of Full Years": years})
-    less_one_year = pd.DataFrame({"Ticker":less_than_one})
 
 
     ## Calculating Optimal Portfolios
@@ -123,15 +125,38 @@ try:
     ret_weight_path = os.path.join(formatting.sumloc, f"req-ret-optimal-weights-{formatting.date}.csv")
 
     ### Optimizing
-    opt.maximize_Sharpe(ret_df, cov_df, sharpe_weight_path)
-    opt.maximize_return(ret_df, cov_df, vol_weight_path, config.func_args["opt_vol"])
-    opt.minimize_volatility(ret_df, cov_df, ret_weight_path, config.func_args["opt_ret"])
+    sharpe_weights = opt.maximize_Sharpe(ret_df, cov_df)
+    max_ret_weights = opt.maximize_return(ret_df, cov_df, config.func_args["opt_vol"])
+    min_vol_weights = opt.minimize_volatility(ret_df, cov_df, config.func_args["opt_ret"])
+    weights_dict = {"Sharpe - ":sharpe_weights, "Max Return - ": max_ret_weights, "Min Volatility - ": min_vol_weights}
 
     ### Formatting Performance
     optimized = pd.DataFrame({'Strategy':opt.strategy, 'Portfolio Return':opt.return_list, 'Portfolio Volatility':opt.risk, 'Portfolio Sharpe':opt.sharpe})
 
+    ## Formatting summary dataframes
+    summary_df = pd.DataFrame({"Ticker": tickers,
+                               "Geometric Return": geom_ret,
+                               "Standard Deviation of Returns": std_ret,
+                               "Number of Full Years": years,
+                               "Current Price": curr_price,
+                               "Annual Dividend Amt": forward_div_rate,
+                               "Current Annual Dividend Yield": forward_div_yield})
+    less_one_year = pd.DataFrame({"Ticker":less_than_one})
+
+    for di in weights_dict:
+        df = weights_dict[di]
+        summary_df = pd.merge(summary_df, df, on='Ticker')
+        summary_df[di+"$ invested"] = summary_df[di.split("-")[0] + "Weights"] * config.func_args["port_cap"]
+        summary_df[di+"Num Shares"] = summary_df.apply(lambda x: math.trunc(x[di+"$ invested"] / x["Current Price"]), axis=1)
+        summary_df[di+"Annual Dividend"] = summary_df.apply(lambda x: round(x["Annual Dividend Amt"] * x[di+"Num Shares"], 2), axis=1)
+
+    ## Saving Configuration Snapshot
+    config_wide = pd.DataFrame(config.func_args, index=[0])
+    config_wide["id"] = config_wide.index
+    config_long = config_wide.melt(id_vars='id', var_name = "Configuration", value_name = "Value").drop("id", axis=1)
+
     ## Save Summary File
-    formatting.output_summary(summary_df, less_one_year, optimized)
+    formatting.output_summary(summary_df, optimized, less_one_year, config_long)
 
 except Exception as e:
     logger.error(f"Step 3 failed with the following message - {traceback.format_exc()}")

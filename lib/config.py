@@ -16,7 +16,7 @@ class Config():
         Initializing the attributes of config.json location.
         """
         # Configuration File Location
-        self.config_dir = "__CONFIG FILE DIRECTORY__"
+        self.config_dir = "__CONFIG DIR PATH__"
         self.config_nm = "config.json"
         self.config_path = os.path.join(self.config_dir, self.config_nm)
 
@@ -58,8 +58,9 @@ class Config():
                 "start_dt": data["function_args"]["start_date"],
                 "req_ret": data["function_args"]["required_return"],
                 "rf_rate": data["function_args"]["risk_free_rate"],
-                'opt_ret': data["function_args"]["optimizer_return"],
-                'opt_vol': data['function_args']['optimizer_volatility']
+                "port_cap": data["function_args"]["portfolio_capital"],
+                "opt_ret": data["function_args"]["optimizer_return"],
+                "opt_vol": data["function_args"]["optimizer_volatility"]
             }
 
         # Assert configurations are correct
@@ -68,10 +69,9 @@ class Config():
         assert os.path.exists(self.summary_cfg["location"]), "Summary file location does not exist"
         assert (self.output_cfg["extension"][0] == ".") & (self.input_cfg["extension"][0] == ".") & (self.summary_cfg["extension"][0] == "."), "Input and/or ouput and/or summary configurated extensions do not start with '.'"
         assert self.func_args["start_cap"] > 0, "Starting capital is less than or equal to zero"
+        assert self.func_args["port_cap"] > 0, "Portfolio capital is less than or equal to zero"
         assert re.fullmatch(r'[0-9]{2}/[0-9]{2}/[0-9]{4}', self.func_args["start_dt"]), "Start date does not follow the format mm/dd/yyyy"
         assert self.func_args["req_ret"] > 0, "Required return is less than or equal to zero"
         assert self.func_args["rf_rate"] > 0, "Risk-free return is less than or equal to zero"
-        assert self.func_args["opt_ret"] > 0, "Optimal return is less than or equal to zero"
-        assert self.func_args["opt_vol"] > 0, "Optimal volatility is less than or equal to zero"
         
 # -------------------------------------------#

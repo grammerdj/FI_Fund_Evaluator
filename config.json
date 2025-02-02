@@ -19,11 +19,12 @@
         }
     },
     "function_args": {
-        "start_capital": 10000,
-        "start_date": "01/01/2004",
-        "required_return": 4.298,
-        "risk_free_rate": 2.9,
-        "optimizer_return": 10.27,
-        "optimizer_volatility": 17
+        "start_capital": __PER-FUND STARTING CAPITAL__,
+        "start_date": __FUND RETURN ANALYSIS MINIMUM START DATE__,
+        "required_return": __REQUIRED RETURN__,
+        "risk_free_rate": __RISK-FREE RATE__,
+	"portfolio_capital": __CURRENT PORTFOLIO CAPITAL__
+        "optimizer_return": __MIN RETURN FOR MIN VOLATILITY PORTFOLIO OPTIMIZATION__,
+        "optimizer_volatility": __MAX VOLATILITY FOR MAX RETURN PORTFOLIO OPTIMIZATION__
     }
 }

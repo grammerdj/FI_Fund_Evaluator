@@ -58,7 +58,7 @@ class Formatter():
 
 # -------------------------------------------#
 
-    def output_summary(self, summary_df, less_one_year, optimized):
+    def output_summary(self, summary_df, optimized, less_one_year, config):
         """
         Outputs a summary excel document containing each ticker's longest running geometric return and the number of full years of return data.
         """
@@ -69,7 +69,8 @@ class Formatter():
         ) as writer:
             
             summary_df.to_excel(writer, sheet_name = "Performance Summary", index=False)
-            less_one_year.to_excel(writer, sheet_name = "Funds Started < 1 Year Ago", index=False)
             optimized.to_excel(writer, sheet_name = 'Optimized Portfolio Attributes', index=False)
+            less_one_year.to_excel(writer, sheet_name = "Funds Started < 1 Year Ago", index=False)
+            config.to_excel(writer, sheet_name = "Function Arguments", index=False)
 
 

@@ -24,7 +24,7 @@ class portfolioOptimizer():
 
 # -------------------------------------------#
 
-    def maximize_Sharpe(self, return_df, cov_df, summary_path):
+    def maximize_Sharpe(self, return_df, cov_df):
         """
         Optimizes portfolio weights for the maximum Sharpe ratio,
         """
@@ -35,7 +35,8 @@ class portfolioOptimizer():
 
         # Cleaning and Saving Weights
         ef.clean_weights()
-        ef.save_weights_to_file(summary_path)
+        sharpe_weights = ef.weights
+        sharpe_tickers = ef.tickers
 
         # Getting Optimized Portfolio Performance
         expected_return, volatility, sharpe = ef.portfolio_performance(risk_free_rate=self.rf_rate)
@@ -44,9 +45,12 @@ class portfolioOptimizer():
         self.risk.append(volatility)
         self.sharpe.append(sharpe)
 
+        # Returning Tickers and Weights
+        return pd.DataFrame({"Ticker": list(sharpe_tickers), "Sharpe Weights": list(sharpe_weights)})
+
 # -------------------------------------------#
 
-    def maximize_return(self, return_df, cov_df, summary_path, req_vol):
+    def maximize_return(self, return_df, cov_df, req_vol):
         """
         Optimizes porfolio weights to acheive a maximum return with a given required variance.
         """
@@ -57,7 +61,8 @@ class portfolioOptimizer():
 
         # Cleaning and Saving Weights
         ef.clean_weights()
-        ef.save_weights_to_file(summary_path)
+        max_ret_weights = ef.weights
+        max_ret_tickers = ef.tickers
 
         # Getting Optimized Portfolio Performance
         expected_return, volatility, sharpe = ef.portfolio_performance(risk_free_rate=self.rf_rate)
@@ -66,9 +71,12 @@ class portfolioOptimizer():
         self.risk.append(volatility)
         self.sharpe.append(sharpe)
 
+        # Returning Tickers and Weights
+        return pd.DataFrame({"Ticker": list(max_ret_tickers), "Max Return Weights": list(max_ret_weights)})
+    
 # -------------------------------------------#
 
-    def minimize_volatility(self, return_df, cov_df, summary_path, req_ret):
+    def minimize_volatility(self, return_df, cov_df, req_ret):
         """
         Optimizes portfolio weights to achieve a minimum volatility given a required return.
         """
@@ -79,7 +87,9 @@ class portfolioOptimizer():
 
         # Cleaning and Saving Weights
         ef.clean_weights()
-        ef.save_weights_to_file(summary_path)
+        min_vol_weights = ef.weights
+        min_vol_tickers = ef.tickers
+
 
         # Getting Optimized Portfolio Performance
         expected_return, volatility, sharpe = ef.portfolio_performance(risk_free_rate=self.rf_rate)
@@ -88,4 +98,5 @@ class portfolioOptimizer():
         self.risk.append(volatility)
         self.sharpe.append(sharpe)
 
-    
+        # Returning Tickers and Weights
+        return pd.DataFrame({"Ticker": list(min_vol_tickers), "Min Volatility Weights": list(min_vol_weights)})
