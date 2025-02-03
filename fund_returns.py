@@ -85,7 +85,7 @@ try:
 
     ## Preparing for Portfolio Analysis
     i = np.arange(sd, cd, 1)
-    yearly_ret = pd.DataFrame(index=i)
+    yearly_ret = pd.DataFrame(index=range(len(i)))
 
     ## Calculating per-fund perfomance 
     for ticker in fund_tickers:
@@ -116,6 +116,7 @@ try:
 
     ## Calculating Optimal Portfolios
     cov_df = yearly_ret.cov()
+    print(cov_df)
     ret_df = pd.Series(geom_ret, index = tickers)
     opt = portfolioOptimizer(config.func_args["rf_rate"])
 
@@ -149,6 +150,25 @@ try:
         summary_df[di+"$ invested"] = summary_df[di.split("-")[0] + "Weights"] * config.func_args["port_cap"]
         summary_df[di+"Num Shares"] = summary_df.apply(lambda x: math.trunc(x[di+"$ invested"] / x["Current Price"]), axis=1)
         summary_df[di+"Annual Dividend"] = summary_df.apply(lambda x: round(x["Annual Dividend Amt"] * x[di+"Num Shares"], 2), axis=1)
+
+    ### Adding Correlation Analysis
+    summary_df.set_index("Ticker", inplace=True)
+    count_list = list()
+    ticker_list = list()
+    for idx in range(0, len(summary_df)):
+        sym = summary_df.index[idx]
+        bool = cov_df[[sym]].apply(lambda x: x/(yearly_ret[[sym]].std().iloc[0]*yearly_ret[[x.name]].std().iloc[0]), axis=1) > config.func_args["corr_cutoff"]
+        count_list.append(cov_df[[sym]][bool].count().iloc[0] - 1) # have to subtract to account for its own correlation being 1
+        ti_list = cov_df[[sym]][bool].dropna().index.to_list()
+        ti_list.remove(sym) # have to remove itself from the list
+        ticker_list.append(ti_list)
+
+    corr_anal = pd.DataFrame({"Ticker": summary_df.index.to_list(),
+                               f"Corr Above {config.func_args["corr_cutoff"]}":count_list, 
+                               "Offending Tickers": ticker_list})
+    summary_df.reset_index(inplace=True)
+    summary_df = pd.merge(summary_df, corr_anal, on="Ticker")
+
 
     ## Saving Configuration Snapshot
     config_wide = pd.DataFrame(config.func_args, index=[0])

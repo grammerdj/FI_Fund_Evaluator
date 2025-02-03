@@ -60,7 +60,8 @@ class Config():
                 "rf_rate": data["function_args"]["risk_free_rate"],
                 "port_cap": data["function_args"]["portfolio_capital"],
                 "opt_ret": data["function_args"]["optimizer_return"],
-                "opt_vol": data["function_args"]["optimizer_volatility"]
+                "opt_vol": data["function_args"]["optimizer_volatility"],
+                "corr_cutoff": data["function_args"]["correlation_cutoff"]
             }
 
         # Assert configurations are correct
@@ -73,5 +74,6 @@ class Config():
         assert re.fullmatch(r'[0-9]{2}/[0-9]{2}/[0-9]{4}', self.func_args["start_dt"]), "Start date does not follow the format mm/dd/yyyy"
         assert self.func_args["req_ret"] > 0, "Required return is less than or equal to zero"
         assert self.func_args["rf_rate"] > 0, "Risk-free return is less than or equal to zero"
+        assert (self.func_args["corr_cutoff"] > 0) & (self.func_args["corr_cutoff"] < 1), "Correlation cutoff is outside the bounds (0,1)"
         
 # -------------------------------------------#
