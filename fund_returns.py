@@ -25,7 +25,7 @@ from datetime import datetime as dt
 ## Getting Current Date and Time
 datetime = dt.strftime(dt.now(), "%Y%m%d_%H%M%S")
 logger = logging.getLogger(__name__)
-log_file_path = os.path.join("__LOG DIR PATH__", f'fund_return_log_{datetime}.log')
+log_file_path = os.path.join("__LOG FILE DIR__", f'fund_return_log_{datetime}.log')
 logging.basicConfig(encoding='utf-8',
                     datefmt='%m/%d/%Y %I:%M:%S %p',
                     format = '%(asctime)s - %(levelname)s: %(message)s',
@@ -81,6 +81,8 @@ try:
     forward_div_rate = list()
     forward_div_yield = list()
     curr_price = list()
+    longnames = list()
+    categories = list()
     less_than_one = list()
 
     ## Preparing for Portfolio Analysis
@@ -106,6 +108,15 @@ try:
             years.append(int(parse.investment_performance["Geometric Return w/ Reinvestment"].count()))
             forward_div_rate.append(scrape.ticker.info["dividendRate"])
             forward_div_yield.append(round(scrape.ticker.info["dividendYield"], 4))
+            longnames.append(scrape.ticker.info["longName"])
+
+            ### Sectors and Categories
+            if scrape.ticker.info["quoteType"] == "EQUITY":
+                categories.append(scrape.ticker.info["sector"])
+            elif scrape.ticker.info["quoteType"] == "ETF":
+                categories.append(scrape.ticker.info["category"])
+            else:
+                categories.append("N/A")
             curr_price.append(scrape.prices["Close"][-1:].values[0])
             n = parse.investment_performance["Rate w/ Reinvestment"].to_numpy()[1:]/100
             temp_df = pd.DataFrame({ticker: np.hstack((np.zeros(len(i)-len(n)) + np.nan, n))})
@@ -150,6 +161,10 @@ try:
         summary_df[di+"$ invested"] = summary_df[di.split("-")[0] + "Weights"] * config.func_args["port_cap"]
         summary_df[di+"Num Shares"] = summary_df.apply(lambda x: math.trunc(x[di+"$ invested"] / x["Current Price"]), axis=1)
         summary_df[di+"Annual Dividend"] = summary_df.apply(lambda x: round(x["Annual Dividend Amt"] * x[di+"Num Shares"], 2), axis=1)
+    
+    summary_df["Full Security Name"] = longnames
+    summary_df["Category"] = categories
+
 
     ### Adding Correlation Analysis
     summary_df.set_index("Ticker", inplace=True)
